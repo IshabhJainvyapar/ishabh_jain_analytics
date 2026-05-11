@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lead Efficiency Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #111318;
+    --surface2: #181c23;
+    --border: #1f2530;
+    --accent: #f5a623;
+    --accent2: #e05c5c;
+    --accent3: #4ecdc4;
+    --accent4: #a78bfa;
+    --text: #e8eaf0;
+    --muted: #5a6070;
+    --muted2: #8892a4;
+    --green: #38e07d;
+    --red: #f55b5b;
+    --blue: #5b9cf5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* ─── HEADER ─────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(10,12,16,0.95);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 16px; }
+
+  .logo-badge {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 18px;
+    color: #000;
+    clip-path: polygon(0 0, 88% 0, 100% 12%, 100% 100%, 12% 100%, 0 88%);
+  }
+
+  .header-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+
+  .header-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .header-meta {
+    display: flex; gap: 24px; align-items: center;
+  }
+
+  .meta-pill {
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-size: 10px;
+    color: var(--muted2);
+    letter-spacing: 0.08em;
+  }
+
+  .meta-pill span { color: var(--accent); font-weight: 500; }
+
+  /* ─── LAYOUT ─────────────────────────── */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: calc(100vh - 61px);
+  }
+
+  /* ─── SIDEBAR ────────────────────────── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky;
+    top: 61px;
+    height: calc(100vh - 61px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sidebar-section { padding: 0 20px; margin-bottom: 28px; }
+
+  .sidebar-label {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .sidebar-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .filter-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .filter-select, .filter-input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    border-radius: 2px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .filter-select:focus, .filter-input:focus { border-color: var(--accent); }
+
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '▾';
+    position: absolute; right: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted); font-size: 10px; pointer-events: none;
+  }
+
+  .pill-group { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .pill {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-size: 10px;
+    cursor: pointer;
+    color: var(--muted2);
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .pill.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 500; }
+  .pill.all.active { background: var(--muted2); color: #000; border-color: var(--muted2); }
+
+  .apply-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: opacity 0.15s;
+    margin-top: 4px;
+  }
+
+  .apply-btn:hover { opacity: 0.85; }
+
+  .reset-btn {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    color: var(--muted2);
+    border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    margin-top: 6px;
+  }
+
+  .reset-btn:hover { border-color: var(--muted2); color: var(--text); }
+
+  /* ─── MAIN ───────────────────────────── */
+  .main { padding: 28px 32px; overflow-y: auto; }
+
+  /* ─── STAT CARDS ─────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 16px 18px;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card:hover { border-color: var(--muted); }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .stat-card.c1::before { background: var(--accent); }
+  .stat-card.c2::before { background: var(--accent2); }
+  .stat-card.c3::before { background: var(--accent3); }
+  .stat-card.c4::before { background: var(--accent4); }
+  .stat-card.c5::before { background: var(--green); }
+
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-sub {
+    font-size: 10px;
+    color: var(--muted2);
+    margin-top: 6px;
+  }
+
+  .stat-sub .up { color: var(--green); }
+  .stat-sub .down { color: var(--red); }
+
+  /* ─── VIEW TABS ──────────────────────── */
+  .view-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .view-tab {
+    padding: 10px 20px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+
+  .view-tab:hover { color: var(--text); }
+  .view-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ─── SECTION HEADER ─────────────────── */
+  .section-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .section-count {
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ─── TABLE ──────────────────────────── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead tr {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  th:hover { color: var(--text); }
+  th.sort-asc::after { content: ' ↑'; color: var(--accent); }
+  th.sort-desc::after { content: ' ↓'; color: var(--accent); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  td {
+    padding: 10px 14px;
+    font-size: 11px;
+    color: var(--muted2);
+    white-space: nowrap;
+  }
+
+  td.primary { color: var(--text); font-weight: 500; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+
+  .badge-tp { background: rgba(245,166,35,0.15); color: var(--accent); border: 1px solid rgba(245,166,35,0.3); }
+  .badge-nontp { background: rgba(90,96,112,0.2); color: var(--muted2); border: 1px solid var(--border); }
+  .badge-hunting { background: rgba(224,92,92,0.15); color: var(--accent2); border: 1px solid rgba(224,92,92,0.3); }
+  .badge-farming { background: rgba(78,205,196,0.15); color: var(--accent3); border: 1px solid rgba(78,205,196,0.3); }
+  .badge-ca { background: rgba(167,139,250,0.15); color: var(--accent4); border: 1px solid rgba(167,139,250,0.3); }
+
+  /* ─── MINI BARS ──────────────────────── */
+  .mini-bar-wrap {
+    display: flex; align-items: center; gap: 8px;
+    min-width: 120px;
+  }
+
+  .mini-bar-track {
+    flex: 1; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .mini-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width 0.4s ease;
+  }
+
+  .mini-bar-fill.connect { background: var(--accent3); }
+  .mini-bar-fill.engage { background: var(--accent4); }
+
+  .mini-bar-val {
+    font-size: 10px;
+    color: var(--text);
+    min-width: 28px;
+    text-align: right;
+  }
+
+  /* ─── GRID PANELS ────────────────────── */
+  .panels-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 20px;
+  }
+
+  .panel-title {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* ─── ATTEMPT SPLIT ──────────────────── */
+  .attempt-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .attempt-cell {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 12px;
+    border-radius: 2px;
+    text-align: center;
+  }
+
+  .attempt-num {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .attempt-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .attempt-val.a1 { color: var(--accent); }
+  .attempt-val.a2 { color: var(--accent2); }
+  .attempt-val.a3 { color: var(--accent3); }
+
+  .attempt-pct {
+    font-size: 10px;
+    color: var(--muted2);
+    margin-top: 4px;
+  }
+
+  /* ─── HEAT BAR ───────────────────────── */
+  .heat-row {
+    display: flex; align-items: center;
+    gap: 10px; margin-bottom: 8px;
+  }
+
+  .heat-label {
+    min-width: 120px;
+    font-size: 10px;
+    color: var(--muted2);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .heat-bar-track {
+    flex: 1; height: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .heat-bar-fill {
+    height: 100%;
+    display: flex; align-items: center;
+    padding-left: 8px;
+    font-size: 10px;
+    font-weight: 500;
+    color: #000;
+    transition: width 0.5s ease;
+    min-width: 1px;
+  }
+
+  .heat-total {
+    min-width: 40px;
+    text-align: right;
+    font-size: 11px;
+    color: var(--text);
+  }
+
+  /* ─── SOURCE TAGS ────────────────────── */
+  .source-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .source-tag {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+
+  .source-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .source-name { font-size: 10px; color: var(--muted2); }
+  .source-cnt { font-size: 10px; color: var(--text); }
+
+  /* ─── CONNECT PANEL ──────────────────── */
+  .connect-split-row {
+    display: flex; gap: 8px; margin-bottom: 8px; align-items: center;
+  }
+
+  .connect-name {
+    min-width: 110px; font-size: 10px; color: var(--muted2);
+    overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .seg-bar { flex: 1; height: 16px; display: flex; border-radius: 2px; overflow: hidden; }
+
+  .seg-0 { background: var(--border); }
+  .seg-1 { background: var(--accent3); }
+  .seg-pct { font-size: 10px; color: var(--muted2); min-width: 36px; text-align: right; }
+
+  /* ─── PAGINATION ─────────────────────── */
+  .pagination {
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 4px; margin-top: 12px;
+  }
+
+  .page-btn {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted2);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.1s;
+  }
+
+  .page-btn:hover, .page-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ─── FOOTER ─────────────────────────── */
+  .footer {
+    padding: 16px 32px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .footer-note { font-size: 10px; color: var(--muted); }
+
+  /* ─── ACTIVE VIEW PANELS ─────────────── */
+  .view-panel { display: none; }
+  .view-panel.active { display: block; }
+
+  /* ─── REFRESH BUTTON ─────────────────── */
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid rgba(245,166,35,0.4);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+
+  .refresh-btn:hover {
+    background: rgba(245,166,35,0.1);
+    border-color: var(--accent);
+  }
+
+  .refresh-btn:active {
+    transform: scale(0.97);
+  }
+
+  .refresh-btn.loading {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .refresh-icon {
+    font-size: 13px;
+    display: inline-block;
+    transition: transform 0.3s;
+  }
+
+  .refresh-btn.loading .refresh-icon {
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* ─── SCROLLBAR ──────────────────────── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ─── EFFICIENCY INDICATOR ───────────── */
+  .eff-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  .eff-high { background: var(--green); }
+  .eff-mid { background: var(--accent); }
+  .eff-low { background: var(--red); }
+
+  .no-data {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo-badge">L</div>
+    <div>
+      <div class="header-title">LEAD EFFICIENCY MONITOR</div>
+      <div class="header-sub">≤ 3 Attempts · Real-Time View</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <div class="meta-pill">Last updated: <span id="last-updated">—</span></div>
+    <div class="meta-pill">Total leads: <span id="header-total">—</span></div>
+    <button class="refresh-btn" id="refresh-btn" onclick="handleRefresh()">
+      <span class="refresh-icon">↻</span> Refresh
+    </button>
+    <div class="meta-pill" style="color:var(--accent3);">● LIVE</div>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Team (TP Flag)</div>
+      <div class="pill-group" id="tp-pills">
+        <div class="pill all active" data-val="ALL">All</div>
+        <div class="pill" data-val="TP">TP</div>
+        <div class="pill" data-val="NON_TP">NON-TP</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Sub-Team (IPT)</div>
+      <div class="pill-group" id="ipt-pills">
+        <div class="pill all active" data-val="ALL">All</div>
+        <div class="pill" data-val="hunting">Hunting</div>
+        <div class="pill" data-val="farming">Farming</div>
+        <div class="pill" data-val="ca">CA</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Team Lead</div>
+      <div class="select-wrap">
+        <select class="filter-select" id="tl-select">
+          <option value="ALL">All Team Leads</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Agent</div>
+      <div class="select-wrap">
+        <select class="filter-select" id="agent-select">
+          <option value="ALL">All Agents</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Partner Source</div>
+      <div class="select-wrap">
+        <select class="filter-select" id="source-select">
+          <option value="ALL">All Sources</option>
+        </select>
+      </div>
+    </div>
+
+    
+    <div class="sidebar-section">
+      <div class="sidebar-label">Assigned Date Range</div>
+
+      <input
+        type="date"
+        id="start-date"
+        class="filter-input"
+      />
+
+      <input
+        type="date"
+        id="end-date"
+        class="filter-input"
+        style="margin-top:8px;"
+      />
+    </div>
+
+<div class="sidebar-section">
+      <div class="sidebar-label">Login Status</div>
+      <div class="pill-group" id="login-pills">
+        <div class="pill all active" data-val="ALL">All</div>
+        <div class="pill" data-val="yes">Logged In</div>
+        <div class="pill" data-val="no">Not Logged</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <button class="apply-btn" onclick="applyFilters()">Apply Filters</button>
+      <button class="reset-btn" onclick="resetFilters()">Reset All</button>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- STAT CARDS -->
+    <div class="stats-row">
+      <div class="stat-card c1">
+        <div class="stat-label">Total Leads</div>
+        <div class="stat-value" id="s-total">0</div>
+        <div class="stat-sub">after filters</div>
+      </div>
+      <div class="stat-card c2">
+        <div class="stat-label">Avg Attempts</div>
+        <div class="stat-value" id="s-avg-att">0.0</div>
+        <div class="stat-sub">per lead</div>
+      </div>
+      <div class="stat-card c3">
+        <div class="stat-label">Connect Rate</div>
+        <div class="stat-value" id="s-connect-rate">0%</div>
+        <div class="stat-sub">connects / leads</div>
+      </div>
+      <div class="stat-card c5">
+        <div class="stat-label">Login Done</div>
+        <div class="stat-value" id="s-login">0%</div>
+        <div class="stat-sub">leads with login</div>
+      </div>
+    </div>
+
+    <!-- VIEW TABS -->
+    <div class="view-tabs">
+      <div class="view-tab active" onclick="switchTab('agent')">By Agent</div>
+      <div class="view-tab" onclick="switchTab('team')">By Team / Sub-team</div>
+      <div class="view-tab" onclick="switchTab('tl')">By Team Lead</div>
+      <div class="view-tab" onclick="switchTab('attempt')">Attempt Split</div>
+      
+      <div class="view-tab" onclick="switchTab('source')">By Source</div>
+    </div>
+
+    <!-- ── VIEW: AGENT ─────────────────── -->
+    <div class="view-panel active" id="view-agent">
+      <div class="section-header">
+        <div class="section-title">Agent Performance</div>
+        <div class="section-count" id="agent-count"></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortTable('agent','agent_email')">Agent</th>
+              <th onclick="sortTable('agent','team_lead')">Team Lead</th>
+              <th onclick="sortTable('agent','TP_Flag')">Team</th>
+              <th onclick="sortTable('agent','ipt_team')">Sub-Team</th>
+              <th onclick="sortTable('agent','leads')" class="sort-desc">Leads</th>
+              <th>Attempt Dist.</th>
+              <th onclick="sortTable('agent','connect_rate')">Connect %</th>
+              
+              <th onclick="sortTable('agent','login_rate')">Login %</th>
+            </tr>
+          </thead>
+          <tbody id="agent-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="agent-pagination"></div>
+    </div>
+
+    <!-- ── VIEW: TEAM ──────────────────── -->
+    <div class="view-panel" id="view-team">
+      <div class="panels-grid">
+        <div class="panel">
+          <div class="panel-title">By TP Flag</div>
+          <div id="tp-heat"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">By Sub-Team (IPT)</div>
+          <div id="ipt-heat"></div>
+        </div>
+      </div>
+      <div class="section-header">
+        <div class="section-title">Sub-team Breakdown</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>TP Flag</th>
+              <th>Sub-Team</th>
+              <th class="sort-desc">Total Leads</th>
+              <th>0 Attempt</th>
+              <th>1 Attempt</th>
+              <th>2 Attempts</th>
+              <th>3 Attempts</th>
+              <th>Connect Rate</th>
+              <th>Login Rate</th>
+              <th>Agents</th>
+            </tr>
+          </thead>
+          <tbody id="team-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── VIEW: TEAM LEAD ─────────────── -->
+    <div class="view-panel" id="view-tl">
+      <div class="section-header">
+        <div class="section-title">Team Lead Summary</div>
+        <div class="section-count" id="tl-count"></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th onclick="sortTable('tl','team_lead')">Team Lead</th>
+              <th onclick="sortTable('tl','leads')" class="sort-desc">Total Leads</th>
+              <th>Agents</th>
+              <th>0 Att.</th>
+              <th>1 Att.</th>
+              <th>2 Att.</th>
+              <th>3 Att.</th>
+              <th onclick="sortTable('tl','connect_rate')">Connect %</th>
+              
+              <th onclick="sortTable('tl','login_rate')">Login %</th>
+            </tr>
+          </thead>
+          <tbody id="tl-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── VIEW: ATTEMPT SPLIT ─────────── -->
+    <div class="view-panel" id="view-attempt">
+      <div class="section-header">
+        <div class="section-title">Attempt-wise Lead Distribution</div>
+      </div>
+      <div class="attempt-grid" id="attempt-cards" style="margin-bottom:24px;"></div>
+      <div class="panels-grid">
+        <div class="panel">
+          <div class="panel-title">Attempt split by Team (TP Flag)</div>
+          <div id="att-tp-breakdown"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Attempt split by Sub-Team</div>
+          <div id="att-ipt-breakdown"></div>
+        </div>
+      </div>
+      <div class="panel" style="margin-bottom:24px;">
+        <div class="panel-title">Attempt split by Team Lead</div>
+        <div id="att-tl-breakdown"></div>
+      </div>
+    </div>
+
+    <!-- ── VIEW: SOURCE ────────────────── -->
+    <div class="view-panel" id="view-source">
+      <div class="section-header">
+        <div class="section-title">Partner Source Analysis</div>
+      </div>
+      <div class="panels-grid">
+        <div class="panel">
+          <div class="panel-title">Lead volume by source</div>
+          <div id="src-heat"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Connect rate by source</div>
+          <div id="src-connect"></div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Partner Source</th>
+              <th class="sort-desc">Leads</th>
+              <th>0 Att.</th>
+              <th>1 Att.</th>
+              <th>2 Att.</th>
+              <th>3 Att.</th>
+              <th>Connect Rate</th>
+              
+              <th>Login Rate</th>
+            </tr>
+          </thead>
+          <tbody id="src-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="footer">
+  <div class="footer-note">Lead Efficiency Dashboard · <= 3 Attempts filter active · Data refreshes from lead_efficiency_dashboard.ipynb</div>
+  <div class="footer-note" style="color:var(--muted2);" id="filter-summary"></div>
+</div>
+
+<script>
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1_ERC3roK2Hxyal5JBd1mfyuq9aCg3sEQSJDgw-4CrjE/export?format=csv&gid=941450880';
+
+// ─── DATE NORMALISER ─────────────────────────────────────────────────────────
+// Sheet dates come as "M/D/YYYY" — convert to "YYYY-MM-DD" for reliable filtering
+function toISODate(val){
+  const s = String(val ?? '').trim();
+  if(!s) return '';
+  if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(m) return `${m[3]}-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`;
+  return s;
+}
+
+// ─── CSV PARSER ───────────────────────────────────────────────────────────────
+function parseCSVText(text){
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = []; let cur = '', inQ = false;
+    for(let i = 0; i < line.length; i++){
+      if(line[i]==='"'){ inQ=!inQ; }
+      else if(line[i]===','&&!inQ){ vals.push(cur.trim()); cur=''; }
+      else cur+=line[i];
+    }
+    vals.push(cur.trim());
+    const obj = {};
+    headers.forEach((h,i)=>obj[h]=(vals[i]||'').replace(/^"|"$/g,''));
+    return obj;
+  });
+}
+
+function normalizeRows(rows){
+  return (Array.isArray(rows) ? rows : []).map(r=>({
+    ...r,
+    cust_id: String(r.cust_id ?? '').trim(),
+    TP_Flag: String(r.TP_Flag ?? '').trim().toUpperCase(),
+    ipt_team: String(r.ipt_team ?? '').trim().toLowerCase(),
+    agent_email: String(r.agent_email ?? '').trim(),
+    team_lead: String(r.team_lead ?? '').trim(),
+    assigned_date: toISODate(r.assigned_date),
+    login_date: toISODate(r.login_date),
+    partner_source_of_leads: String(r.partner_source_of_leads ?? r.partner_souce_of_lead ?? '').trim(),
+    total_attempt: parseInt(r.total_attempt, 10) || 0,
+    total_connect: parseInt(r.total_connect, 10) || 0,
+    total_engagements: parseInt(r.total_engagements, 10) || 0,
+  })).filter(r => Number(r.total_attempt) >= 0 && Number(r.total_attempt) <= 3);
+}
+
+let RAW_DATA = [];
+let FILTERED = [];
+
+// ─── FILTERS STATE ────────────────────────────────────────────────────────────
+let filters = { tp:'ALL', ipt:'ALL', tl:'ALL', agent:'ALL', source:'ALL', login:'ALL' };
+let sortState = { view:'agent', col:'leads', dir:'desc' };
+
+// ─── FETCH FROM GOOGLE SHEETS ─────────────────────────────────────────────────
+async function fetchSheetData(){
+  const PROXY = 'https://corsproxy.io/?url=';
+  const res = await fetch(PROXY + encodeURIComponent(SHEET_CSV_URL), { cache:'no-store' });
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  return normalizeRows(parseCSVText(await res.text()));
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+async function init(){
+  document.getElementById('last-updated').textContent = 'Loading…';
+  try{
+    RAW_DATA = await fetchSheetData();
+    FILTERED = [...RAW_DATA];
+    document.getElementById('last-updated').textContent = new Date().toLocaleString();
+    populateDropdowns();
+    applyFilters();
+  } catch(err){
+    document.getElementById('last-updated').textContent = 'Error';
+    document.getElementById('agent-tbody').innerHTML =
+      `<tr><td colspan="8" class="no-data" style="color:var(--red);">
+        Could not load Google Sheet. Ensure it is published: File → Share → Publish to web → CSV.<br>Error: ${err.message}
+      </td></tr>`;
+    console.error('Sheet load error:', err);
+  }
+}
+
+function populateDropdowns(){
+  const tls = [...new Set(RAW_DATA.map(r=>r.team_lead))].sort();
+  const agents = [...new Set(RAW_DATA.map(r=>r.agent_email))].sort();
+  const sources = [...new Set(RAW_DATA.map(r=>r.partner_source_of_leads))].sort();
+
+  fillSelect('tl-select', tls, 'All Team Leads');
+  fillSelect('agent-select', agents, 'All Agents');
+  fillSelect('source-select', sources, 'All Sources');
+}
+
+function fillSelect(id, vals, placeholder){
+  const el = document.getElementById(id);
+  el.innerHTML = `<option value="ALL">${placeholder}</option>`;
+  vals.forEach(v=>{ el.innerHTML+=`<option value="${v}">${v}</option>`; });
+}
+
+// ─── PILL GROUPS ──────────────────────────────────────────────────────────────
+['tp-pills','ipt-pills','login-pills'].forEach(groupId=>{
+  document.getElementById(groupId).addEventListener('click',e=>{
+    const pill = e.target.closest('.pill');
+    if(!pill) return;
+    const group = document.getElementById(groupId);
+    group.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+    pill.classList.add('active');
+
+    const val = pill.dataset.val;
+    if(groupId==='tp-pills') filters.tp=val;
+    if(groupId==='ipt-pills') filters.ipt=val;
+    if(groupId==='login-pills') filters.login=val;
+  });
+});
+
+function applyFilters(){
+  filters.tl = document.getElementById('tl-select').value;
+  filters.agent = document.getElementById('agent-select').value;
+  filters.source = document.getElementById('source-select').value;
+
+  const startDate = document.getElementById('start-date').value;
+  const endDate = document.getElementById('end-date').value;
+
+  FILTERED = RAW_DATA.filter(r=>{
+    if(filters.tp!=='ALL' && r.TP_Flag!==filters.tp) return false;
+    if(filters.ipt!=='ALL' && r.ipt_team!==filters.ipt) return false;
+    if(filters.tl!=='ALL' && r.team_lead!==filters.tl) return false;
+    if(filters.agent!=='ALL' && r.agent_email!==filters.agent) return false;
+    if(filters.source!=='ALL' && r.partner_source_of_leads!==filters.source) return false;
+    if(filters.login==='yes' && !hasLogin(r)) return false;
+    if(filters.login==='no' && hasLogin(r)) return false;
+
+    if(startDate && r.assigned_date < startDate) return false;
+    if(endDate && r.assigned_date > endDate) return false;
+
+    return true;
+  });
+
+  updateStats();
+  renderCurrentView();
+  updateFilterSummary();
+}
+
+function resetFilters(){
+  filters = { tp:'ALL', ipt:'ALL', tl:'ALL', agent:'ALL', source:'ALL', login:'ALL' };
+  document.querySelectorAll('.pill').forEach(p=>{
+    p.classList.toggle('active', p.dataset.val==='ALL');
+  });
+  ['tl-select','agent-select','source-select'].forEach(id=>{
+    document.getElementById(id).value='ALL';
+  });
+  applyFilters();
+}
+
+function updateFilterSummary(){
+  const parts=[];
+  if(filters.tp!=='ALL') parts.push('Team: '+filters.tp);
+  if(filters.ipt!=='ALL') parts.push('Sub: '+filters.ipt);
+  if(filters.tl!=='ALL') parts.push('TL: '+filters.tl);
+  if(filters.agent!=='ALL') parts.push('Agent: '+filters.agent);
+  if(filters.source!=='ALL') parts.push('Source: '+filters.source);
+  if(filters.login!=='ALL') parts.push('Login: '+filters.login);
+  document.getElementById('filter-summary').textContent = parts.length ? '▸ '+parts.join(' · ') : 'No filters';
+}
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+function updateStats(){
+  const n = new Set(FILTERED.map(r => r.cust_id)).size;
+
+  const totalAtt = FILTERED.reduce((s,r)=>s+Number(r.total_attempt || 0),0);
+
+  const connectedLeads =
+    new Set(
+      FILTERED
+        .filter(r => Number(r.total_connect) > 0)
+        .map(r => r.cust_id)
+    ).size;
+
+  const logins =
+    new Set(
+      FILTERED
+        .filter(hasLogin)
+        .map(r => r.cust_id)
+    ).size;
+
+  document.getElementById('header-total').textContent = n.toLocaleString();
+  document.getElementById('s-total').textContent = n.toLocaleString();
+  document.getElementById('s-avg-att').textContent = n?((totalAtt/n).toFixed(1)):'0.0';
+  document.getElementById('s-connect-rate').textContent = n?pct(connectedLeads,n)+'%':'0%';
+  document.getElementById('s-login').textContent = n?pct(logins,n)+'%':'0%';
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+let currentTab = 'agent';
+
+function switchTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.view-tab').forEach((el,i)=>{
+    const tabs = ['agent','team','tl','attempt','source'];
+    el.classList.toggle('active', tabs[i]===tab);
+  });
+  document.querySelectorAll('.view-panel').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  renderCurrentView();
+}
+
+function renderCurrentView(){
+  switch(currentTab){
+    case 'agent': renderAgent(); break;
+    case 'team': renderTeam(); break;
+    case 'tl': renderTL(); break;
+    case 'attempt': renderAttempt(); break;
+    
+    case 'source': renderSource(); break;
+  }
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function pct(n,d){ return d?Math.round(n/d*100):0; }
+
+function groupBy(arr, key){
+  return arr.reduce((acc,r)=>{
+    const k=r[key]; if(!acc[k]) acc[k]=[];
+    acc[k].push(r); return acc;
+  },{});
+}
+
+function hasLogin(row){
+  const value = String(row.login_date ?? '').trim().toLowerCase();
+  return value !== '' && value !== 'null' && value !== 'none' && value !== 'nat';
+}
+
+function uniqueCustCount(rows){
+  return new Set(rows.map(r => r.cust_id).filter(Boolean)).size;
+}
+
+function aggGroup(rows){
+  const n = uniqueCustCount(rows);
+
+  const att0 = new Set(
+    rows.filter(r => Number(r.total_attempt) === 0)
+        .map(r => r.cust_id)
+  ).size;
+
+  const att1 = new Set(
+    rows.filter(r => Number(r.total_attempt) === 1)
+        .map(r => r.cust_id)
+  ).size;
+
+  const att2 = new Set(
+    rows.filter(r => Number(r.total_attempt) === 2)
+        .map(r => r.cust_id)
+  ).size;
+
+  const att3 = new Set(
+    rows.filter(r => Number(r.total_attempt) === 3)
+        .map(r => r.cust_id)
+  ).size;
+
+  const connected_leads = new Set(
+    rows
+      .filter(r => Number(r.total_connect) > 0)
+      .map(r => r.cust_id)
+  ).size;
+
+  const logins = new Set(
+    rows
+      .filter(hasLogin)
+      .map(r => r.cust_id)
+  ).size;
+
+  return {
+    n,
+    att0,
+    att1,
+    att2,
+    att3,
+    connected_leads,
+    logins,
+    connect_rate: pct(connected_leads, n),
+    login_rate: pct(logins, n)
+  };
+}
+
+function effDot(rate){
+  const c = rate>=40?'eff-high':rate>=20?'eff-mid':'eff-low';
+  return `<span class="eff-dot ${c}"></span>`;
+}
+
+function tpBadge(v){ return v==='TP'?'badge-tp':'badge-nontp'; }
+function iptBadge(v){
+  const m={'hunting':'badge-hunting','farming':'badge-farming','ca':'badge-ca'};
+  return m[v]||'';
+}
+
+function miniBar(val, max, cls=''){
+  const w = max?Math.round(val/max*100):0;
+  return `<div class="mini-bar-wrap">
+    <div class="mini-bar-track"><div class="mini-bar-fill ${cls}" style="width:${w}%"></div></div>
+    <div class="mini-bar-val">${val}</div>
+  </div>`;
+}
+
+function heatBar(label, val, max, color){
+  const w = max?Math.max(2,Math.round(val/max*100)):0;
+  return `<div class="heat-row">
+    <div class="heat-label">${label}</div>
+    <div class="heat-bar-track">
+      <div class="heat-bar-fill" style="width:${w}%;background:${color};">${w>12?val:''}</div>
+    </div>
+    <div class="heat-total">${val}</div>
+  </div>`;
+}
+
+const COLORS = ['#f5a623','#e05c5c','#4ecdc4','#a78bfa','#38e07d','#5b9cf5','#f97316','#ec4899'];
+
+// ─── RENDER: AGENT ────────────────────────────────────────────────────────────
+let agentPage = 0;
+const PAGE_SIZE = 15;
+let agentSort = { col:'leads', dir:'desc' };
+
+function renderAgent(){
+  const byAgent = groupBy(FILTERED, 'agent_email');
+  let rows = Object.entries(byAgent).map(([email, arr])=>{
+    const a = aggGroup(arr);
+    const r0 = arr[0];
+    return { agent_email: email, team_lead: r0.team_lead, TP_Flag: r0.TP_Flag,
+      ipt_team: r0.ipt_team, leads: a.n, att0: a.att0, att1: a.att1, att2: a.att2, att3: a.att3,
+      connect_rate: a.connect_rate, login_rate: a.login_rate };
+  });
+
+  rows = sortRows(rows, agentSort.col, agentSort.dir);
+
+  const total = rows.length;
+  const pages = Math.ceil(total/PAGE_SIZE);
+  if(agentPage>=pages) agentPage=0;
+  const paged = rows.slice(agentPage*PAGE_SIZE, (agentPage+1)*PAGE_SIZE);
+
+  document.getElementById('agent-count').textContent = `${total} agents`;
+  const maxLeads = Math.max(...rows.map(r=>r.leads),1);
+
+  const tbody = document.getElementById('agent-tbody');
+  tbody.innerHTML = paged.map(r=>`
+    <tr>
+      <td class="primary">${r.agent_email}</td>
+      <td>${r.team_lead}</td>
+      <td><span class="badge ${tpBadge(r.TP_Flag)}">${r.TP_Flag}</span></td>
+      <td><span class="badge ${iptBadge(r.ipt_team)}">${r.ipt_team}</span></td>
+      <td class="num">${miniBar(r.leads, maxLeads)}</td>
+      <td>
+        <div style="display:flex;gap:3px;align-items:center;">
+          <span style="font-size:9px;color:var(--muted)">0</span><span style="color:#8892a4;font-weight:500;">${r.att0}</span>
+          <span style="font-size:9px;color:var(--muted);margin-left:4px;">1</span><span style="color:var(--accent);font-weight:500;">${r.att1}</span>
+          <span style="font-size:9px;color:var(--muted);margin-left:4px;">2</span><span style="color:var(--accent2);font-weight:500;">${r.att2}</span>
+          <span style="font-size:9px;color:var(--muted);margin-left:4px;">3</span><span style="color:var(--accent3);font-weight:500;">${r.att3}</span>
+        </div>
+      </td>
+      <td>${effDot(r.connect_rate)}<span style="color:var(--text)">${r.connect_rate}%</span></td>
+      <td>${r.login_rate}%</td>
+    </tr>
+  `).join('') || '<tr><td colspan="8" class="no-data">No data for current filters</td></tr>';
+
+  // pagination
+  const pg = document.getElementById('agent-pagination');
+  pg.innerHTML = '';
+  if(pages>1){
+    const btn=(label,p,active=false)=>{
+      const b=document.createElement('button');
+      b.className='page-btn'+(active?' active':'');
+      b.textContent=label;
+      b.onclick=()=>{ agentPage=p; renderAgent(); };
+      return b;
+    };
+    if(agentPage>0) pg.appendChild(btn('‹',agentPage-1));
+    for(let i=0;i<pages;i++) pg.appendChild(btn(i+1,i,i===agentPage));
+    if(agentPage<pages-1) pg.appendChild(btn('›',agentPage+1));
+  }
+}
+
+function sortTable(view, col){
+  if(view==='agent'){
+    if(agentSort.col===col) agentSort.dir = agentSort.dir==='desc'?'asc':'desc';
+    else { agentSort.col=col; agentSort.dir='desc'; }
+    agentPage=0;
+    renderAgent();
+  }
+}
+
+function sortRows(rows, col, dir){
+  return [...rows].sort((a,b)=>{
+    let va=a[col], vb=b[col];
+    if(typeof va==='string') va=va.toLowerCase();
+    if(typeof vb==='string') vb=vb.toLowerCase();
+    if(va<vb) return dir==='asc'?-1:1;
+    if(va>vb) return dir==='asc'?1:-1;
+    return 0;
+  });
+}
+
+// ─── RENDER: TEAM ─────────────────────────────────────────────────────────────
+function renderTeam(){
+  const byTP = groupBy(FILTERED,'TP_Flag');
+  const byIPT = groupBy(FILTERED,'ipt_team');
+
+  // heat: TP
+  const tpMax = Math.max(...Object.values(byTP).map(a=>a.length),1);
+  document.getElementById('tp-heat').innerHTML =
+    Object.entries(byTP).map(([k,v],i)=>heatBar(k,v.length,tpMax,COLORS[i])).join('');
+
+  // heat: IPT
+  const iptMax = Math.max(...Object.values(byIPT).map(a=>a.length),1);
+  document.getElementById('ipt-heat').innerHTML =
+    Object.entries(byIPT).map(([k,v],i)=>heatBar(k,v.length,iptMax,COLORS[i+2])).join('');
+
+  // breakdown table
+  const rows=[];
+  Object.entries(byTP).forEach(([tp,tpRows])=>{
+    const byI = groupBy(tpRows,'ipt_team');
+    Object.entries(byI).forEach(([ipt,arr])=>{
+      const a = aggGroup(arr);
+      const agents = new Set(arr.map(r=>r.agent_email)).size;
+      rows.push({tp,ipt,agents,...a});
+    });
+  });
+  rows.sort((a,b)=>b.n-a.n);
+
+  document.getElementById('team-tbody').innerHTML = rows.map(r=>`
+    <tr>
+      <td><span class="badge ${tpBadge(r.tp)}">${r.tp}</span></td>
+      <td><span class="badge ${iptBadge(r.ipt)}">${r.ipt}</span></td>
+      <td class="num primary">${r.n}</td>
+      <td class="num">${r.att0}</td>
+      <td class="num">${r.att1}</td>
+      <td class="num">${r.att2}</td>
+      <td class="num">${r.att3}</td>
+      <td>${effDot(r.connect_rate)}${r.connect_rate}%</td>
+      <td>${r.login_rate}%</td>
+      <td class="num">${r.agents}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="10" class="no-data">No data</td></tr>';
+}
+
+// ─── RENDER: TEAM LEAD ────────────────────────────────────────────────────────
+function renderTL(){
+  const byTL = groupBy(FILTERED,'team_lead');
+  let rows = Object.entries(byTL).map(([tl,arr])=>{
+    const a = aggGroup(arr);
+    const agents = new Set(arr.map(r=>r.agent_email)).size;
+    return { team_lead:tl, leads:a.n, agents, att0:a.att0, att1:a.att1, att2:a.att2, att3:a.att3,
+      connect_rate:a.connect_rate, login_rate:a.login_rate };
+  });
+  rows.sort((a,b)=>b.leads-a.leads);
+
+  document.getElementById('tl-count').textContent = `${rows.length} team leads`;
+
+  document.getElementById('tl-tbody').innerHTML = rows.map(r=>`
+    <tr>
+      <td class="primary">${r.team_lead}</td>
+      <td class="num">${r.leads}</td>
+      <td class="num">${r.agents}</td>
+      <td class="num">${r.att0}</td>
+      <td class="num">${r.att1}</td>
+      <td class="num">${r.att2}</td>
+      <td class="num">${r.att3}</td>
+      <td>${effDot(r.connect_rate)}${r.connect_rate}%</td>
+      <td>${r.login_rate}%</td>
+    </tr>
+  `).join('') || '<tr><td colspan="9" class="no-data">No data</td></tr>';
+}
+
+// ─── RENDER: ATTEMPT ─────────────────────────────────────────────────────────
+function renderAttempt(){
+  const n = FILTERED.length;
+  const att0 = FILTERED.filter(r=>Number(r.total_attempt)===0).length;
+  const att1 = FILTERED.filter(r=>Number(r.total_attempt)===1).length;
+  const att2 = FILTERED.filter(r=>r.total_attempt===2).length;
+  const att3 = FILTERED.filter(r=>r.total_attempt===3).length;
+
+  document.getElementById('attempt-cards').innerHTML = [
+    {label:'0 Attempt',val:att0,cls:'a1'},
+    {label:'1 Attempt',val:att1,cls:'a1'},
+    {label:'2 Attempts',val:att2,cls:'a2'},
+    {label:'3 Attempts',val:att3,cls:'a3'},
+  ].map(c=>`<div class="attempt-cell">
+    <div class="attempt-num">${c.label}</div>
+    <div class="attempt-val ${c.cls}">${c.val}</div>
+    <div class="attempt-pct">${pct(c.val,n)}% of total</div>
+  </div>`).join('');
+
+  // TP breakdown
+  const byTP = groupBy(FILTERED,'TP_Flag');
+  document.getElementById('att-tp-breakdown').innerHTML =
+    Object.entries(byTP).map(([tp,arr])=>{
+      const a=aggGroup(arr);
+      return `<div style="margin-bottom:12px;">
+        <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;">${tp} (${a.n} leads)</div>
+        ${attSegBar(a.att0,a.att1,a.att2,a.att3,a.n)}
+      </div>`;
+    }).join('');
+
+  const byIPT = groupBy(FILTERED,'ipt_team');
+  document.getElementById('att-ipt-breakdown').innerHTML =
+    Object.entries(byIPT).map(([ipt,arr])=>{
+      const a=aggGroup(arr);
+      return `<div style="margin-bottom:12px;">
+        <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;">${ipt} (${a.n} leads)</div>
+        ${attSegBar(a.att0,a.att1,a.att2,a.att3,a.n)}
+      </div>`;
+    }).join('');
+
+  const byTL = groupBy(FILTERED,'team_lead');
+  document.getElementById('att-tl-breakdown').innerHTML =
+    `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">` +
+    Object.entries(byTL).map(([tl,arr])=>{
+      const a=aggGroup(arr);
+      return `<div>
+        <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${tl} (${a.n})</div>
+        ${attSegBar(a.att0,a.att1,a.att2,a.att3,a.n)}
+      </div>`;
+    }).join('')+`</div>`;
+}
+
+function attSegBar(a0,a1,a2,a3,n){
+  const p0=pct(a0,n),
+        p1=pct(a1,n),
+        p2=pct(a2,n),
+        p3=pct(a3,n);
+
+  return `<div style="height:18px;display:flex;border-radius:2px;overflow:hidden;font-size:9px;line-height:18px;">
+    <div style="width:${p0}%;background:#8892a4;color:#000;padding-left:4px;overflow:hidden;">${p0>8?a0:''}</div>
+    <div style="width:${p1}%;background:var(--accent);color:#000;padding-left:4px;overflow:hidden;">${p1>8?a1:''}</div>
+    <div style="width:${p2}%;background:var(--accent2);color:#fff;padding-left:4px;overflow:hidden;">${p2>8?a2:''}</div>
+    <div style="width:${p3}%;background:var(--accent3);color:#000;padding-left:4px;overflow:hidden;">${p3>8?a3:''}</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
+    <span style="font-size:9px;color:#8892a4;">■ 0att ${p0}%</span>
+    <span style="font-size:9px;color:var(--accent);">■ 1att ${p1}%</span>
+    <span style="font-size:9px;color:var(--accent2);">■ 2att ${p2}%</span>
+    <span style="font-size:9px;color:var(--accent3);">■ 3att ${p3}%</span>
+  </div>`;
+}
+
+// ─── RENDER: CONNECT ──────────────────────────────────────────────────────────
+function renderConnect(){
+  const connBar = (label, conn, total)=>{
+    const cp = pct(conn,total);
+    const ncp = 100-cp;
+    return `<div class="connect-split-row">
+      <div class="connect-name">${label}</div>
+      <div class="seg-bar">
+        <div class="seg-1" style="width:${cp}%;"></div>
+        <div class="seg-0" style="width:${ncp}%;"></div>
+      </div>
+      <div class="seg-pct">${cp}%</div>
+    </div>`;
+  };
+
+  const byTP = groupBy(FILTERED,'TP_Flag');
+  document.getElementById('conn-team').innerHTML =
+    Object.entries(byTP).map(([tp,arr])=>{
+      const a=aggGroup(arr);
+      return connBar(tp,a.conn,a.n);
+    }).join('');
+
+  const byIPT = groupBy(FILTERED,'ipt_team');
+  document.getElementById('conn-ipt').innerHTML =
+    Object.entries(byIPT).map(([ipt,arr])=>{
+      const a=aggGroup(arr);
+      return connBar(ipt,a.conn,a.n);
+    }).join('');
+
+  const byTL = groupBy(FILTERED,'team_lead');
+  let tlRows = Object.entries(byTL).map(([tl,arr])=>({tl,...aggGroup(arr)}));
+  tlRows.sort((a,b)=>b.connect_rate-a.connect_rate);
+  document.getElementById('conn-tl').innerHTML = tlRows.map(r=>connBar(r.tl,r.conn,r.n)).join('');
+
+  // agent table
+  const byAgent = groupBy(FILTERED,'agent_email');
+  let agRows = Object.entries(byAgent).map(([email,arr])=>{
+    const a=aggGroup(arr); const r0=arr[0];
+    return {email, tl:r0.team_lead, ipt:r0.ipt_team, ...a};
+  });
+  agRows.sort((a,b)=>b.connect_rate-a.connect_rate);
+
+  document.getElementById('conn-agent-tbody').innerHTML = agRows.map(r=>`
+    <tr>
+      <td class="primary">${r.email}</td>
+      <td>${r.tl}</td>
+      <td><span class="badge ${iptBadge(r.ipt)}">${r.ipt}</span></td>
+      <td class="num">${r.n}</td>
+      <td class="num" style="color:var(--accent3)">${r.conn}</td>
+      <td class="num" style="color:var(--muted2)">${r.n-r.conn}</td>
+      <td>${effDot(r.connect_rate)}${r.connect_rate}%</td>
+      <td class="num" style="color:var(--accent4)">${r.eng}</td>
+      <td>${effDot(r.engage_rate)}${r.engage_rate}%</td>
+    </tr>
+  `).join('') || '<tr><td colspan="9" class="no-data">No data</td></tr>';
+}
+
+// ─── RENDER: SOURCE ───────────────────────────────────────────────────────────
+function renderSource(){
+  const bySrc = groupBy(FILTERED,'partner_source_of_leads');
+  let rows = Object.entries(bySrc).map(([src,arr])=>({src,...aggGroup(arr)}));
+  rows.sort((a,b)=>b.n-a.n);
+  const maxN = Math.max(...rows.map(r=>r.n),1);
+
+  document.getElementById('src-heat').innerHTML =
+    rows.map((r,i)=>heatBar(r.src,r.n,maxN,COLORS[i%COLORS.length])).join('');
+
+  // connect rate heat
+  const maxCR = Math.max(...rows.map(r=>r.connect_rate),1);
+  document.getElementById('src-connect').innerHTML =
+    rows.map((r,i)=>heatBar(r.src,r.connect_rate,maxCR,COLORS[(i+3)%COLORS.length])).join('');
+
+  document.getElementById('src-tbody').innerHTML = rows.map(r=>`
+    <tr>
+      <td class="primary">${r.src}</td>
+      <td class="num">${r.n}</td>
+      <td class="num">${r.att0}</td>
+      <td class="num">${r.att1}</td>
+      <td class="num">${r.att2}</td>
+      <td class="num">${r.att3}</td>
+      <td>${effDot(r.connect_rate)}${r.connect_rate}%</td>
+      <td>${r.login_rate}%</td>
+    </tr>
+  `).join('') || '<tr><td colspan="8" class="no-data">No data</td></tr>';
+}
+
+// ─── REFRESH ──────────────────────────────────────────────────────────────────
+async function handleRefresh(){
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('loading');
+  try{
+    RAW_DATA = await fetchSheetData();
+    FILTERED = [...RAW_DATA];
+    document.getElementById('last-updated').textContent = new Date().toLocaleString();
+    populateDropdowns();
+    applyFilters();
+  } catch(err){
+    alert('Could not refresh from Google Sheet: ' + err.message);
+  } finally{
+    setTimeout(()=>btn.classList.remove('loading'), 600);
+  }
+}
+
+// ─── START ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
